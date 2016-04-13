@@ -1,0 +1,17 @@
+{
+  "name": "authgw",
+  "version": "0.0.0",
+  "description": "ExpressJS middleware to generate JWT auth tokens & provide user role management",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "auth",
+    "express",
+    "role",
+    "management"
+  ],
+  "author": "Tyler Fowler <tylerfowler.1337@gmail.com>",
+  "license": "MIT"
+}
