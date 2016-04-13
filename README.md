@@ -26,7 +26,8 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
     // general options, defaults are shown
     {
       tokenHeader: 'x-access-token', // the header to read & write an auth token
-      tokenSecret: '<randomly generated>' // the secret key used to encrypt the tokens
+      tokenSecret: '<randomly generated>', // the secret key used to encrypt the tokens
+      tokenExpiredCode: 419 // HTTP code to return if token is expired, 419 Session Timeout (unofficial) is the default
     }
   );
 
