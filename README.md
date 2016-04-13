@@ -66,7 +66,7 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
 
     let authToken = authgw.createToken(
       // data that is bundled w/ the token, will be injected into req when this
-      // goes through the middleware
+      // token goes through the middleware during a request
       userData,
 
       // role given to the token holder
