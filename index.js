@@ -116,12 +116,21 @@ middleware.verifyTokenExpress = function verifyToken() {
   @returns 401 if the given token is missing required data
 **/
 middleware.injectTokenDataExpress = function injectTokenData() {
-  // TODO:
-  // - validate data fields match schema, throw away anything extra
-  // - write schema fields into request object
-
   return (req, res, next) => {
     if (!req._tokenData) return next();
-    const data = req._tokenData;
+
+    _.chain(req._tokenData)
+    .pick(_.pluck(this.dataSchema, 'name'))
+    .tap(filtered => {
+      let missing = _.find(
+        this.dataSchema, s => s.required && !_.has(filtered, s.name)
+      );
+
+      if (missing)
+        next(new Error(`Required item ${missingItm.name} is missing`));
+    })
+    .each((v, k) => req[k] = v);
+
+    next();
   };
 };
