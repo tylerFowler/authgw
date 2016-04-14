@@ -50,7 +50,7 @@ function AuthGW(roles, authorityName, dataSchema, opts) {
   @param { String } token is the encrypted auth token
   @returns Promise<Object> contains the token's data
 **/
-AuthGW.prototype.verifyAuthToken = function verifyAuthtoken(token) {
+AuthGW.prototype.verifyToken = function verifyToken(token) {
   return JWT
   .verifyAsync(token, this.opts.tokenSecret, { issuer: this.authorityName });
 };
@@ -83,7 +83,7 @@ middleware.verifyTokenExpress = function verifyToken() {
     // if there's no token just don't inject the user data
     if (!authToken) return next();
 
-    this.verifyAuthToken(authToken)
+    this.verifyToken(authToken)
     .then(tokenData => {
       req._tokenData = tokenData;
       next();
@@ -122,15 +122,29 @@ middleware.injectTokenDataExpress = function injectTokenData() {
     _.chain(req._tokenData)
     .pick(_.pluck(this.dataSchema, 'name'))
     .tap(filtered => {
-      let missing = _.find(
-        this.dataSchema, s => s.required && !_.has(filtered, s.name)
-      );
-
-      if (missing)
-        next(new Error(`Required item ${missingItm.name} is missing`));
+      let result = validateSchema(filtered, this.dataSchema);
+      if (!result.valid)
+        return next(new Error(`Required item ${result.missingKey} is missing`));
     })
     .each((v, k) => req[k] = v);
 
     next();
   };
 };
+
+/** Utility Functions **/
+/**
+  @name validateSchema
+  @desc Validates that the given data fulfills the given schema
+  @param { Object } data to validate
+  @param { Object } AuthGW schema to validate against
+  @returns { valid, missingKey }
+**/
+function validateSchema(data, schema) {
+  let missing = _.find(schema, s => s.required && !_.has(data, s.name));
+
+  if (missing)
+    return { valid: false, missingKey: missing.name };
+
+  return { valid: true };
+}
