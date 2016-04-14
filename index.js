@@ -8,6 +8,7 @@
 'use strict';
 
 const crypto  = require('crypto');
+const _       = require('underscore');
 const Promise = require('bluebird');
 const JWT     = Promise.promisifyAll(require('jsonwebtoken'));
 
@@ -23,17 +24,19 @@ let middleware = exports.Middleware = {};
   @param { String[] } roles - list of all possible user roles from lowest
     access level to highest access level :optional
   @param { String } authorityName - serves as the JWT 'issuer' name
-  @param { Object } dataSchema - defines the keys you expect to write to tokens
+  @param { Object[] } dataSchema - defines the keys to r/w to/from tokens
   @param { Object } opts
   @returns AuthGW instance
 **/
-module.exports = exports = AuthGW;
 function AuthGW(roles, authorityName, dataSchema, opts) {
   if (!Array.isArray(roles)) roles = [roles];
 
   this.roles = roles;
   this.authorityName = authorityName;
-  this.dataSchema = dataSchema; // TODO: could we give functions to be evaluated?
+
+  // if required is omitted default to false
+  this.dataSchema = dataSchema.map(s => _.defaults(s, { required: false }));
+
   this.opts = Object.assign({
     tokenHeader: 'x-access-token',
     tokenSecret: crypto.randomBytes(24).toString('hex'),
@@ -113,10 +116,12 @@ middleware.verifyTokenExpress = function verifyToken() {
   @returns 401 if the given token is missing required data
 **/
 middleware.injectTokenDataExpress = function injectTokenData() {
+  // TODO:
+  // - validate data fields match schema, throw away anything extra
+  // - write schema fields into request object
+
   return (req, res, next) => {
+    if (!req._tokenData) return next();
     const data = req._tokenData;
-    // TODO:
-    // - validate data fields match schema, throw away anything extra
-    // - write schema fields into request object
   };
 };

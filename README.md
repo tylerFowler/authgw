@@ -21,7 +21,10 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
 
     // data schema, defines the data for what's written as into a token's
     // payload, required keys throw errors during validation when falsy
-    { userid: "required", username: "optional" },
+    [
+      { name: "userid",   required: true  },
+      { name: "username", required: false }
+    ],
 
     // general options, defaults are shown
     {
