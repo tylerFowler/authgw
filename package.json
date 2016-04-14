@@ -13,5 +13,10 @@
     "management"
   ],
   "author": "Tyler Fowler <tylerfowler.1337@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.3.5",
+    "jsonwebtoken": "^5.7.0",
+    "ramda": "^0.21.0"
+  }
 }
