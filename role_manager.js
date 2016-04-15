@@ -8,7 +8,8 @@
 **/
 'use strict';
 
-const _ = require('underscore');
+const _            = require('underscore');
+const AuthGWError  = require('errors');
 
 // character that represents 'All' roles
 const RoleWildcard = '*';
@@ -54,6 +55,9 @@ let restrictToExpress = function restrictTo(allowedRoles) {
 **/
 RoleManager.prototype.getRolesFromMinimum =
 function getRolesFromMinimum(minRole) {
+  if (!_.contains(this.roles, minRole))
+    throw new AuthGWError.InvalidRoleError(minRole);
+
   return _.chain(this.roles)
   .map(r => r.toLowerCase())
   .last(roles.length - this.roles.findIndex(r => r === minRole.toLowerCase()))
