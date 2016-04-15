@@ -47,6 +47,27 @@ let restrictToExpress = function restrictTo(allowedRoles) {
 };
 
 /**
+  @name RoleManager#addRoleGrouping
+  @desc Adds a new shorthand method to this instance for restricting access
+    to the given role group, will be named like 'allow${name}' in camel case
+  @param { String } groupName => name of the role group, used in method name
+  @param { String[] } roleGroup => roles to group together, must be valid roles
+  @throws InvalidRoleError if a role in the group is invalid
+**/
+RoleManager.prototype.addRoleGrouping =
+function addRoleGrouping(groupName, roleGroup) {
+  if (!Array.isArray(roleGroup)) roleGroup = [roleGroup];
+
+  let roleDiff = _.difference(roleGroup, this.roles);
+  if (roleDiff.length > 0)
+    throw new AuthGWError.InvalidRoleError(roleDiff);
+
+  let camelName = groupName[0].toUpperCase + _.rest(groupName).join('');
+
+  this[`allow${camelName}`] = () => this.restrictTo(roleGroup);
+};
+
+/**
   RoleManager#getRolesFromMinimum
   @desc Gets the list of every role above & including the given min role
     Note that this assumes that the list of roles is lowest to highest priority
