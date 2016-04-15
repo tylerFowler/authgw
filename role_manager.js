@@ -17,7 +17,8 @@ const RoleWildcard = '*';
 module.exports = exports = RoleManager;
 
 function RoleManager(roles) {
-  this.roles = roles;
+  // be sure to add the wildcard to the beginning of the roles list
+  this.roles = _.union(RoleWildcard, roles);
 }
 
 /**
