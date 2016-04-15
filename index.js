@@ -27,6 +27,10 @@ let middleware = exports.Middleware = {};
   @param { String } authorityName - serves as the JWT 'issuer' name
   @param { Object[] } dataSchema - defines the keys to r/w to/from tokens
   @param { Object } opts
+  @param { String } opts.tokenHeader :default => 'x-access-token'
+  @param { String } opts.tokenAlgo :default => 'HS256'
+  @param { String|Buffer } opts.tokenSecret :default => 24 random bytes in hex
+  @param { Number } opts.tokenExpiredCode :default => 419 (Token Expired)
   @returns AuthGW instance
 **/
 function AuthGW(roles, authorityName, dataSchema, opts) {
@@ -40,9 +44,12 @@ function AuthGW(roles, authorityName, dataSchema, opts) {
 
   this.opts = Object.assign({
     tokenHeader: 'x-access-token',
-    tokenSecret: crypto.randomBytes(24).toString('hex'),
+    tokenAlgo: 'HS256', // HMAC w/ SHA-256
+    tokenSecret: crypto.randomBytes(24),
     tokenExpiredCode: 419
   }, opts);
+
+  this.opts.tokenSecret = this.opts.tokenSecret.toString('hex');
 
   this.RoleManager = new RoleMgr(roles);
 }
@@ -53,22 +60,23 @@ function AuthGW(roles, authorityName, dataSchema, opts) {
   @param { Object } data written to the token, must have keys required by schema
   @param { String } role must be one of the roles given to this authgw instance
   @param { Number } expiry time of the token in minutes
-  @returns { String } token contains the raw, encrypted token
+  @returns { Promise<String> } token containing the raw encrypted token
   @throws InvalidRoleError if the given role is not listed
 **/
 AuthGw.prototype.createToken = function createToken(data, role, expiry) {
-  if (!_.contains(this.roles, role))
-    throw new AuthGWError.InvalidRoleError(role);
-
-  return JWT.sign(
+  return Promise.attempt(() => {
+    if (!_.contains(this.roles, role))
+      throw new AuthGWError.InvalidRoleError(role);
+  })
+  .then(() => JWT.signAsync(
     { data, role },
     this.opts.tokenSecret,
     {
-      algorithm: 'HS256', // HMAC w/ SHA-256
+      algorithm: this.opts.tokenAlgo,
       expiresIn: expiry * 60,
       issuer: this.authorityName
     }
-  );
+  ));
 };
 
 /**
