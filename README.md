@@ -62,6 +62,8 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
 
   // errbody
   app.get('/robots.txt', RoleMgr.allowAll(), (req, res) => { ... });
+  // or
+  app.get('/robots.txt', RoleMgr.restrictTo('*'), (req, res) => { ... });
 
   // create an auth token
   app.get('/signin', RoleMgr.allowAll(), (req, res) => {
