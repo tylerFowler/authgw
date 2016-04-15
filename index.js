@@ -11,6 +11,7 @@ const crypto  = require('crypto');
 const _       = require('underscore');
 const Promise = require('bluebird');
 const JWT     = Promise.promisifyAll(require('jsonwebtoken'));
+const RoleMgr = require('./role_manager');
 
 module.exports = exports = AuthGW;
 
@@ -42,6 +43,8 @@ function AuthGW(roles, authorityName, dataSchema, opts) {
     tokenSecret: crypto.randomBytes(24).toString('hex'),
     tokenExpiredCode: 419
   }, opts);
+
+  this.RoleManager = new RoleMgr(roles);
 }
 
 /**
