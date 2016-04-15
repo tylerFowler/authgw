@@ -4,7 +4,7 @@
   "description": "ExpressJS middleware to generate JWT auth tokens & provide user role management",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tape spec | node_modules/.bin/tap-spec"
   },
   "keywords": [
     "auth",
@@ -18,5 +18,10 @@
     "bluebird": "^3.3.5",
     "jsonwebtoken": "^5.7.0",
     "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "express": "^4.13.4",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.5.1"
   }
 }
