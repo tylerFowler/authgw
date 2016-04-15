@@ -142,6 +142,7 @@ middleware.verifyTokenExpress = function verifyToken() {
 **/
 middleware.injectTokenDataExpress = function injectTokenData() {
   return (req, res, next) => {
+    var err;
     if (!req._tokenData) return next();
 
     _.chain(req._tokenData)
@@ -149,11 +150,12 @@ middleware.injectTokenDataExpress = function injectTokenData() {
     .tap(filtered => {
       let result = validateSchema(filtered, this.dataSchema);
       if (!result.valid)
-        return next(new Error(`Required item ${result.missingKey} is missing`));
+        err = new Error(`Required item ${result.missingKey} is missing`);
     })
     .each((v, k) => req[k] = v);
 
-    next();
+    if (err) next(err);
+    else next();
   };
 };
 
