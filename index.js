@@ -45,6 +45,30 @@ function AuthGW(roles, authorityName, dataSchema, opts) {
 }
 
 /**
+  @name AuthGW#createToken
+  @desc Creates a new auth token with the given role & data
+  @param { Object } data written to the token, must have keys required by schema
+  @param { String } role must be one of the roles given to this authgw instance
+  @param { Number } expiry time of the token in minutes
+  @returns { String } token contains the raw, encrypted token
+  @throws InvalidRoleError if the given role is not listed
+**/
+AuthGw.prototype.createToken = function createToken(data, role, expiry) {
+  if (!_.contains(this.roles, role))
+    throw new AuthGWError.InvalidRoleError(role);
+
+  return JWT.sign(
+    { data, role },
+    this.opts.tokenSecret,
+    {
+      algorithm: 'HS256', // HMAC w/ SHA-256
+      expiresIn: expiry * 60,
+      issuer: this.authorityName
+    }
+  );
+};
+
+/**
   @name AuthGW#verifyAuthToken
   @desc Verifies that a given token is valid, unexpired, and trusted
   @param { String } token is the encrypted auth token
@@ -85,7 +109,8 @@ middleware.verifyTokenExpress = function verifyToken() {
 
     this.verifyToken(authToken)
     .then(tokenData => {
-      req._tokenData = tokenData;
+      req._tokenData = tokenData.data;
+      req.userRole = tokenData.role;
       next();
     })
 
