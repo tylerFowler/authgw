@@ -61,7 +61,7 @@ function AuthGW(roles, authorityName, dataSchema, opts) {
   @param { String } role must be one of the roles given to this authgw instance
   @param { Number } expiry time of the token in minutes
   @returns { Promise<String> } token containing the raw encrypted token
-  @throws InvalidRoleError if the given role is not listed
+  @returns { Promise<InvalidRoleError> } if the given role is not listed
 **/
 AuthGw.prototype.createToken = function createToken(data, role, expiry) {
   return Promise.attempt(() => {
@@ -80,14 +80,47 @@ AuthGw.prototype.createToken = function createToken(data, role, expiry) {
 };
 
 /**
-  @name AuthGW#verifyAuthToken
+  @name AuthGW#createTokenSync
+  @desc Sync version of create token
+  @see AutghGW#createToken
+  @returns { String } string containing the encrypted token
+  @throws InvalidRoleError if the given role is not listed
+**/
+AuthGW.prototype.createTokenSync = function createToken(data, role, expiry) {
+  if (!_.contains(this.roles, role))
+    throw new AutghGwError.InvalidRoleError(role);
+
+  return JWT.sign(
+    { data, role },
+    this.opts.tokenSecret,
+    {
+      algorithm: this.opts.tokenAlgo,
+      expiresIn: expiry * 60,
+      issuer: this.authorityName
+    }
+  );
+};
+
+/**
+  @name AuthGW#verifyToken
   @desc Verifies that a given token is valid, unexpired, and trusted
   @param { String } token is the encrypted auth token
-  @returns Promise<Object> contains the token's data
+  @returns Promise<Object> object containing the token's payload data if valid
 **/
 AuthGW.prototype.verifyToken = function verifyToken(token) {
   return JWT
   .verifyAsync(token, this.opts.tokenSecret, { issuer: this.authorityName });
+};
+
+/**
+  @name AuthGW#verifyTokenSync
+  @desc Sync version of verify token
+  @see AuthGW#verifyToken
+  @returns { Object } object containing the token's payload data if valid
+**/
+AuthGW.prototype.verifyTokenSync = function verifyToken(token) {
+  return JWT
+  .verify(token, this.opts.tokenSecret, { issuer: this.authorityName });
 };
 
 /**
