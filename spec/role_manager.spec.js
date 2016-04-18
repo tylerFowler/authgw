@@ -90,3 +90,29 @@ test('Role Manager Restriction Middleware', t => {
   .catch(err => t.error(err))
   .finally(() => t.end());
 });
+
+test('Custom Role Groupings', t => {
+  let roleMgr = new RoleManager(['guest', 'user', 'restricted', 'admin']);
+
+  try {
+    roleMgr.addRoleGrouping('users', ['user', 'restricted', 'admin']);
+    t.assert(roleMgr.allowUsers, 'Should add an allowUsers method');
+  } catch (err) { t.error(err); }
+
+  try {
+    roleMgr.addRoleGrouping('guest', 'guest');
+    t.assert(roleMgr.allowGuest, 'Should accept nonarray values');
+  } catch (err) { t.error(err); }
+
+  t.throws(
+    () => roleMgr.addRoleGrouping('invalid', [ 'user86', 'notarole', 'admin' ]),
+    'Should throw an error for invalid roles'
+  );
+
+  t.throws(
+    () => roleMgr.addRoleGrouping('a', 'notarole'),
+    'Should throw an error for a single invalid role'
+  );
+
+  t.end();
+});
