@@ -129,3 +129,85 @@ test('Verify token express middleware', t => {
     t.notok(req.userRole, 'Token role should not be written');
   });
 });
+
+test.only('Data Injection Middleware', t => {
+  let runWith = (schema, data, cb) => {
+    const authgw = new AuthGW(['admin'], 'myapp', schema);
+    let injectDataFn = AuthGW.Middleware.injectTokenDataExpress.call(authgw);
+    let req = { userRole: 'admin', _tokenData: data };
+
+    injectDataFn(req, {}, err => cb(err, req));
+  };
+
+  t.plan(10);
+
+  // Standard Request w/ No Missing Data
+  runWith([{name: 'userid', required: true}], {userid: 'tyler'}, (err, req) => {
+    t.comment('Valid Request - Required Only');
+    if (err) { t.error(err); return t.end(); }
+
+    t.equals(req.userid, 'tyler', 'UserID should be injected into request');
+  });
+
+  // Standard Request w/ No Missing Data & Optional Value
+  runWith(
+    [{ name: 'userid', required: true }, { name: 'username', required: false }],
+    { userid: 1234, username: 'tyler' },
+    (err, req) => {
+      t.comment('Valid Request w/ Optional Val');
+      if (err) { t.error(err); return t.end(); }
+
+      t.equals(req.userid, 1234, 'UserID should be injected into request');
+      t.equals(req.username, 'tyler', 'Optional key should be injected');
+    }
+  );
+
+  // Missing Required
+  runWith(
+    [{name: 'reqOne', required: true}, {name: 'reqTwo', required: true}],
+    { reqOne: true },
+    (err, req) => {
+      t.comment('Missing Required');
+      t.assert(err, 'Should give an error');
+      t.notok(req.reqOne, 'Should not write data that *was* given');
+    }
+  );
+
+  // No Data
+  runWith([{name: 'userid', required: true}], null, err => {
+    t.comment('No Data Passed');
+    t.notok(err, 'Should not give an error');
+  });
+
+  // Extra Data
+  runWith(
+    [{name: 'userid', required: true}], {userid: 'tyler', extra: true},
+    (err, req) => {
+      t.comment('Extra Data');
+      if (err) { t.error(err); return t.end(); }
+
+      t.ok(req.userid, 'Required key should be injected');
+      t.notok(req.extra, 'Extra key should not be injected');
+    }
+  );
+
+  // Missing Optional
+  let optionalSchema = [
+    {name: 'userid', required: true}, {name: 'opt', required: false}
+  ];
+
+  runWith(optionalSchema, {userid: 'tyler'}, err => {
+    t.comment('Missing Optional');
+    if (err) { t.error(err); return t.end(); }
+    t.assert(!err, 'Should not give error');
+  });
+
+  // Implicit Optional
+  let implicitOptSchema = [{name: 'userid', required: true}, {name: 'opt'}];
+
+  runWith(implicitOptSchema, {userid: 'tyler'}, err => {
+    t.comment('Implicit Optional');
+    if (err) { t.error(err); return t.end(); }
+    t.assert(!err, 'Should not give error');
+  });
+});
