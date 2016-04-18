@@ -1,16 +1,7 @@
 'use strict';
 
 const test    = require('tape');
-const express = require('express');
 const AuthGW  = require('../lib/authgw');
-
-const createApp = authgw => {
-  let app = express();
-
-  app.set('authgw', authgw);
-  app.use(authgw.middleware());
-  return app;
-};
 
 test('AuthGW configuration', t => {
   t.plan(3);
