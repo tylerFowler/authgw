@@ -1,6 +1,7 @@
 'use strict';
 
 const test    = require('tape');
+const Promise = require('bluebird');
 const AuthGW  = require('../lib/authgw');
 
 test('AuthGW configuration', t => {
@@ -90,35 +91,48 @@ test('Verify token express middleware', t => {
     verifyTokenFn(req, res, nextErr => cb(nextErr, req, res));
   };
 
-  t.plan(6);
+  let testCases = [];
 
-  // Regular Successful Verification
-  let userData = { userid: 1234, username: 'tyler' };
-  let validToken = authgw.createTokenSync(userData, 'admin', 10);
-  runTest(validToken, (err, req) => {
-    t.comment('Valid Token Verification');
-    if (err) { t.error(err); t.end(); }
-    t.assert(req._tokenData, 'Data should have been injected into request');
-    t.equal(req._tokenData.userid, userData.userid, 'Data should match the token');
-    t.equal(req.userRole, 'admin', 'Should write the token role to req');
+  let successfulVerification = new Promise((resolve, reject) => {
+    let userData = { userid: 1234, username: 'tyler' };
+    let validToken = authgw.createTokenSync(userData, 'admin', 10);
+    runTest(validToken, (err, req) => {
+      t.comment('Valid Token Verification');
+      if (err) reject(err);
+      t.assert(req._tokenData, 'Data should have been injected into request');
+      t.equal(req._tokenData.userid, userData.userid, 'Data should match the token');
+      t.equal(req.userRole, 'admin', 'Should write the token role to req');
+      resolve();
+    });
   });
+  testCases.push(successfulVerification);
 
-  // Invalid/Malformed Token
-  runTest('notatoken', (err, req, res) => {
-    t.comment('Invalid/Malformed Token');
-    if (err) { t.error(err); return t.end(); }
+  let invalidToken = new Promise((resolve, reject) => {
+    runTest('notatoken', (err, req, res) => {
+      t.comment('Invalid/Malformed Token');
+      if (err) reject(err);
 
-    t.equal(res.statusCode, 401, 'Error for malformed token should be 401');
+      t.equal(res.statusCode, 401, 'Error for malformed token should be 401');
+      resolve();
+    });
   });
+  testCases.push(invalidToken);
 
-  // Empty Token Data
-  runTest(null, (err, req) => {
-    t.comment('Empty Token');
-    if (err) { t.error(err); return t.end(); }
+  let emptyToken = new Promise((resolve, reject) => {
+    runTest(null, (err, req) => {
+      t.comment('Empty Token');
+      if (err) reject(err);
 
-    t.notok(req._tokenData, 'Token data should not be written');
-    t.notok(req.userRole, 'Token role should not be written');
+      t.notok(req._tokenData, 'Token data should not be written');
+      t.notok(req.userRole, 'Token role should not be written');
+      resolve();
+    });
   });
+  testCases.push(emptyToken);
+
+  Promise.all(testCases)
+  .catch(err => t.error(err))
+  .finally(() => t.end());
 });
 
 test('Data Injection Middleware', t => {
@@ -130,75 +144,99 @@ test('Data Injection Middleware', t => {
     injectDataFn(req, {}, err => cb(err, req));
   };
 
-  t.plan(10);
+  let testCases = [];
 
-  // Standard Request w/ No Missing Data
-  runWith([{name: 'userid', required: true}], {userid: 'tyler'}, (err, req) => {
-    t.comment('Valid Request - Required Only');
-    if (err) { t.error(err); return t.end(); }
+  let stdRequest = new Promise((resolve, reject) => {
+    let schema = [{name: 'userid', required: true}];
+    runWith(schema, {userid: 'tyler'}, (err, req) => {
+      t.comment('Valid Request - Required Only');
+      if (err) return reject(err);
 
-    t.equals(req.userid, 'tyler', 'UserID should be injected into request');
+      t.equals(req.userid, 'tyler', 'UserID should be injected into request');
+      resolve();
+    });
   });
+  testCases.push(stdRequest);
 
-  // Standard Request w/ No Missing Data & Optional Value
-  runWith(
-    [{ name: 'userid', required: true }, { name: 'username', required: false }],
-    { userid: 1234, username: 'tyler' },
-    (err, req) => {
+  let optionalData = new Promise((resolve, reject) => {
+    let schema = [
+      { name: 'userid', required: true }, { name: 'username', required: false }
+    ];
+
+    runWith(schema, { userid: 1234, username: 'tyler' }, (err, req) => {
       t.comment('Valid Request w/ Optional Val');
-      if (err) { t.error(err); return t.end(); }
+      if (err) return reject(err);
 
       t.equals(req.userid, 1234, 'UserID should be injected into request');
       t.equals(req.username, 'tyler', 'Optional key should be injected');
-    }
-  );
-
-  // Missing Required
-  runWith(
-    [{name: 'reqOne', required: true}, {name: 'reqTwo', required: true}],
-    { reqOne: true },
-    (err, req) => {
-      t.comment('Missing Required');
-      t.assert(err, 'Should give an error');
-      t.notok(req.reqOne, 'Should not write data that *was* given');
-    }
-  );
-
-  // No Data
-  runWith([{name: 'userid', required: true}], null, err => {
-    t.comment('No Data Passed');
-    t.notok(err, 'Should not give an error');
+      resolve();
+    });
   });
+  testCases.push(optionalData);
 
-  // Extra Data
-  runWith(
-    [{name: 'userid', required: true}], {userid: 'tyler', extra: true},
-    (err, req) => {
-      t.comment('Extra Data');
-      if (err) { t.error(err); return t.end(); }
-
-      t.ok(req.userid, 'Required key should be injected');
-      t.notok(req.extra, 'Extra key should not be injected');
-    }
-  );
-
-  // Missing Optional
-  let optionalSchema = [
-    {name: 'userid', required: true}, {name: 'opt', required: false}
-  ];
-
-  runWith(optionalSchema, {userid: 'tyler'}, err => {
-    t.comment('Missing Optional');
-    if (err) { t.error(err); return t.end(); }
-    t.assert(!err, 'Should not give error');
+  let missingData = new Promise((resolve, reject) => {
+    runWith(
+      [{name: 'reqOne', required: true}, {name: 'reqTwo', required: true}],
+      { reqOne: true },
+      (err, req) => {
+        t.comment('Missing Required');
+        t.assert(err, 'Should give an error');
+        t.notok(req.reqOne, 'Should not write data that *was* given');
+        resolve();
+      }
+    );
   });
+  testCases.push(missingData);
 
-  // Implicit Optional
-  let implicitOptSchema = [{name: 'userid', required: true}, {name: 'opt'}];
-
-  runWith(implicitOptSchema, {userid: 'tyler'}, err => {
-    t.comment('Implicit Optional');
-    if (err) { t.error(err); return t.end(); }
-    t.assert(!err, 'Should not give error');
+  let noData = new Promise((resolve, reject) => {
+    runWith([{name: 'userid', required: true}], null, err => {
+      t.comment('No Data Passed');
+      t.notok(err, 'Should not give an error');
+      resolve();
+    });
   });
+  testCases.push(noData);
+
+  let extraData = new Promise((resolve, reject) => {
+    runWith(
+      [{name: 'userid', required: true}], {userid: 'tyler', extra: true},
+      (err, req) => {
+        t.comment('Extra Data');
+        if (err) return reject(err);
+
+        t.ok(req.userid, 'Required key should be injected');
+        t.notok(req.extra, 'Extra key should not be injected');
+        resolve();
+      }
+    );
+  });
+  testCases.push(extraData);
+
+  let missingOptional = new Promise((resolve, reject) => {
+    let optionalSchema = [
+      {name: 'userid', required: true}, {name: 'opt', required: false}
+    ];
+
+    runWith(optionalSchema, {userid: 'tyler'}, err => {
+      t.comment('Missing Optional');
+      t.assert(!err, 'Should not give error');
+      resolve();
+    });
+  });
+  testCases.push(missingOptional);
+
+  let implicitOptional = new Promise((resolve, reject) => {
+    let implicitOptSchema = [{name: 'userid', required: true}, {name: 'opt'}];
+
+    runWith(implicitOptSchema, {userid: 'tyler'}, err => {
+      t.comment('Implicit Optional');
+      t.assert(!err, 'Should not give error');
+      resolve();
+    });
+  });
+  testCases.push(implicitOptional);
+
+  Promise.all(testCases)
+  .catch(err => t.error(err))
+  .finally(() => t.end());
 });
