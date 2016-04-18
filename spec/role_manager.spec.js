@@ -116,3 +116,26 @@ test('Custom Role Groupings', t => {
 
   t.end();
 });
+
+test('Get Roles from Minimum', t => {
+  let roleMgr = new RoleManager(['guest', 'user', 'admin']);
+
+  t.deepEquals(
+    roleMgr.getRolesFromMinimum('user'),
+    [ 'user', 'admin' ],
+    'Should return the roles above the given one, inclusive'
+  );
+
+  t.deepEquals(
+    roleMgr.getRolesFromMinimum('admin'),
+    [ 'admin' ],
+    'Should return the last role if the last role is provided'
+  );
+
+  t.throws(
+    () => roleMgr.getRolesFromMinimum('notarole'),
+    'Should throw if given role is not valid'
+  );
+
+  t.end();
+});
