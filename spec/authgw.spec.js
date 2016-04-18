@@ -121,7 +121,7 @@ test('Verify token express middleware', t => {
   });
 });
 
-test.only('Data Injection Middleware', t => {
+test('Data Injection Middleware', t => {
   let runWith = (schema, data, cb) => {
     const authgw = new AuthGW(['admin'], 'myapp', schema);
     let injectDataFn = AuthGW.Middleware.injectTokenDataExpress.call(authgw);
