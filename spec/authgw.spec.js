@@ -69,7 +69,7 @@ test('Verify token express middleware', t => {
   let authgw = new AuthGW(['user', 'admin'], 'myapp', schema);
   let verifyTokenFn = AuthGW.Middleware.verifyTokenExpress.call(authgw);
 
-  let runTest = (token, cb) => {
+  let runWith = (token, cb) => {
     let req = {headers: { 'x-access-token': token }};
     let res = {
       statusCode: null, msg: null, sendHook: null,
@@ -96,7 +96,7 @@ test('Verify token express middleware', t => {
   let successfulVerification = new Promise((resolve, reject) => {
     let userData = { userid: 1234, username: 'tyler' };
     let validToken = authgw.createTokenSync(userData, 'admin', 10);
-    runTest(validToken, (err, req) => {
+    runWith(validToken, (err, req) => {
       t.comment('Valid Token Verification');
       if (err) reject(err);
       t.assert(req._tokenData, 'Data should have been injected into request');
@@ -108,7 +108,7 @@ test('Verify token express middleware', t => {
   testCases.push(successfulVerification);
 
   let invalidToken = new Promise((resolve, reject) => {
-    runTest('notatoken', (err, req, res) => {
+    runWith('notatoken', (err, req, res) => {
       t.comment('Invalid/Malformed Token');
       if (err) reject(err);
 
@@ -119,7 +119,7 @@ test('Verify token express middleware', t => {
   testCases.push(invalidToken);
 
   let emptyToken = new Promise((resolve, reject) => {
-    runTest(null, (err, req) => {
+    runWith(null, (err, req) => {
       t.comment('Empty Token');
       if (err) reject(err);
 
@@ -174,7 +174,7 @@ test('Data Injection Middleware', t => {
   });
   testCases.push(optionalData);
 
-  let missingData = new Promise((resolve, reject) => {
+  let missingData = new Promise(resolve => {
     runWith(
       [{name: 'reqOne', required: true}, {name: 'reqTwo', required: true}],
       { reqOne: true },
@@ -188,7 +188,7 @@ test('Data Injection Middleware', t => {
   });
   testCases.push(missingData);
 
-  let noData = new Promise((resolve, reject) => {
+  let noData = new Promise(resolve => {
     runWith([{name: 'userid', required: true}], null, err => {
       t.comment('No Data Passed');
       t.notok(err, 'Should not give an error');
@@ -212,7 +212,7 @@ test('Data Injection Middleware', t => {
   });
   testCases.push(extraData);
 
-  let missingOptional = new Promise((resolve, reject) => {
+  let missingOptional = new Promise(resolve => {
     let optionalSchema = [
       {name: 'userid', required: true}, {name: 'opt', required: false}
     ];
@@ -225,7 +225,7 @@ test('Data Injection Middleware', t => {
   });
   testCases.push(missingOptional);
 
-  let implicitOptional = new Promise((resolve, reject) => {
+  let implicitOptional = new Promise(resolve => {
     let implicitOptSchema = [{name: 'userid', required: true}, {name: 'opt'}];
 
     runWith(implicitOptSchema, {userid: 'tyler'}, err => {
