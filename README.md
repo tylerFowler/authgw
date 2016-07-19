@@ -72,7 +72,7 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
     // get the data specified by the authgw configured data scheme
     let userData = { userid: req.body.userid, username: req.body.username };
 
-    let authToken = authgw.createToken(
+    authgw.createToken(
       // data that is bundled w/ the token, will be injected into req when this
       // token goes through the middleware during a request
       userData,
@@ -83,6 +83,6 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
       // expiry of this token in minutes, expired tokens will be rejected by
       // the token verification middleware
       24 * 60
-    );
+    ).then(mytoken => res.send(mytoken));
   });
 ```
