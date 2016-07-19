@@ -31,7 +31,7 @@
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-clean": "^0.3.2",
-    "gulp-tape": "0.0.7",
+    "gulp-tape": "0.0.9",
     "tap-spec": "^4.1.1",
     "tape": "^4.5.1"
   }
