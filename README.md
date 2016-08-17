@@ -86,3 +86,6 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
     ).then(mytoken => res.send(mytoken));
   });
 ```
+# TODO:
+- [ ] make docs better, specifically add API docs
+- [ ] add Cookie as token transport method (introduces token transport concept)
