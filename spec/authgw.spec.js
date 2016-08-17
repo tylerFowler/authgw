@@ -25,13 +25,14 @@ test('AuthGW async token creation and validation', t => {
     { name: 'username', required: false }
   ];
 
+  const claims = { subject: 'for the test' };
+
   let authgw = new AuthGW(['user', 'admin'], 'myapp', schema);
 
-  authgw.createToken({userid: 1234, username: 'tyler'}, 'admin', 30)
+  authgw.createToken({userid: 1234, username: 'tyler'}, 'admin', 30, claims)
   .then(token => {
     t.assert(token, 'Token should exist');
-
-    return authgw.verifyToken(token);
+    return authgw.verifyToken(token, { subject: 'for the test' });
   })
   .then(unwrapped => {
     t.equal(unwrapped.data.userid, 1234, 'Token userid should match');
@@ -44,15 +45,17 @@ test('AuthGW async token creation and validation', t => {
 
 test('AuthGW sync token creation and validation', t => {
   const schema = [{ name: 'userid', required: true }];
+  const claims = { subject: 'for the test' };
   let authgw = new AuthGW(['user', 'admin'], 'myapp', schema);
 
   try {
-    let token =
-    authgw.createTokenSync({userid: 1234, username: 'tyler'}, 'admin', 30);
+    let token = authgw.createTokenSync(
+      {userid: 1234, username: 'tyler'}, 'admin', 30, claims
+    );
 
     t.assert(token, 'Token should exist');
 
-    let unwrapped = authgw.verifyTokenSync(token);
+    let unwrapped = authgw.verifyTokenSync(token, { subject: 'for the test' });
     t.equal(unwrapped.data.userid, 1234, 'Token userid should match');
     t.equal(unwrapped.data.username, 'tyler', 'Token username should match');
     t.equal(unwrapped.role, 'admin', 'Token role should match');
