@@ -91,6 +91,9 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
 ## Beware the dreaded invalidation loop
 It is **vitally** important that the client does **not** send another request with a token known to be invalid (i.e. your client has received the status code indicating session expiration or invalidation), or else the middleware will simply continue to send the error code – resulting in an infinite loop.
 
+## Randomly generated secrets
+By default this library will make your JWT secret a random hex value generated from 24 random bytes (using Node's `crypto` library). This means that whenever your application restarts all tokens generated before the restart will now be invalid. Worse, if you use a round robin technique with multiple Node processes then the tokens will *not* be compatible between the instances. So it's highly recommended that you override this setting.
+
 # TODO:
 - [ ] make docs better, specifically add API docs
 - [ ] add Cookie as token transport method (introduces token transport concept)
