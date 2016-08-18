@@ -1,5 +1,3 @@
-'use strict';
-
 const test        = require('tape');
 const Promise     = require('bluebird');
 const RoleManager = require('../lib/role_manager');
