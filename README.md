@@ -10,6 +10,7 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
 ```js
   const AuthGW = require('authgw');
   const app    = require('express')();
+  const { TransportMethods, Flavors } = require('authgw');
 
   // set AuthGW configuration, library is stateful so only do this once
   let authgw = new AuthGW(
@@ -30,9 +31,17 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
 
     // general options, defaults are shown
     {
-      tokenHeader: 'x-access-token', // the header to read & write an auth token
+      flavor: Flavors.EXPRESSJS, // the flavor of middleware to use, options found in lib/flavors.js
       tokenSecret: '<randomly generated>', // the secret key used to encrypt the tokens
       tokenExpiredCode: 419 // HTTP code to return if token is expired, 419 Session Timeout (unofficial) is the default
+
+      // the transport is a wrapper around the method used to get the token
+      // from a request, as well as putting the token into responses using
+      // convenience methods
+      transport: {
+        method: TransportMethods.HEADER, // use headers for transporting tokens, options found in the TokenTransports enumeration
+        key: 'x-access-token' // the 'key' to use when retrieving the token, in this case a header name
+      }
     }
   );
 
@@ -83,7 +92,12 @@ Exposes an API to create user auth tokens based on the [JWT](jwt.io) spec and pr
       // expiry of this token in minutes, expired tokens will be rejected by
       // the token verification middleware
       24 * 60
-    ).then(mytoken => res.send(mytoken));
+    )
+    // inject the token into the response in any way you see fit
+    .then(mytoken => res.send(mytoken))
+    // or, use the authgw instance to inject the token according to the
+    // rules set by the token transport settings
+    .then(mytoken => authgw.injectToken(res, mytoken));
   });
 ```
 
