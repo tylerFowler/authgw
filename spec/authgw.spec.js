@@ -73,7 +73,11 @@ test('Verify token express middleware', t => {
   let verifyTokenFn = AuthGW.Middleware.verifyTokenExpress.call(authgw);
 
   let runWith = (token, cb) => {
-    let req = {headers: { 'x-access-token': token }};
+    let req = {
+      headers: { 'x-access-token': token },
+      get(header) { return this.headers[header]; }
+    };
+
     let res = {
       statusCode: null, msg: null, sendHook: null,
       status: function status(s) { this.statusCode = s; return this; },
