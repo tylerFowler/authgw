@@ -1,6 +1,6 @@
 {
   "name": "authgw",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "ExpressJS middleware to generate JWT auth tokens & provide user role management",
   "author": "Tyler Fowler <tylerfowler.1337@gmail.com>",
   "license": "MIT",
