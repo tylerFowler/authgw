@@ -145,8 +145,14 @@ test('Data Injection Middleware', t => {
     const authgw = new AuthGW(['admin'], 'myapp', schema);
     let injectDataFn = AuthGW.Middleware.injectTokenDataExpress.call(authgw);
     let req = { userRole: 'admin', _tokenData: data };
+    let res = {
+      _status: 200,
+      status(status) { this._status = status; return this; },
+      sendStatus(status) { this._status = status; cb(null, req, res); },
+      send() { cb(null, req, res); }
+    };
 
-    injectDataFn(req, {}, err => cb(err, req));
+    injectDataFn(req, res, err => cb(err, req, res));
   };
 
   let testCases = [];
@@ -183,9 +189,9 @@ test('Data Injection Middleware', t => {
     runWith(
       [{name: 'reqOne', required: true}, {name: 'reqTwo', required: true}],
       { reqOne: true },
-      (err, req) => {
+      (err, req, res) => {
         t.comment('Missing Required');
-        t.assert(err, 'Should give an error');
+        t.equal(res._status, 401, 'Should send 401 status code');
         t.notok(req.reqOne, 'Should not write data that *was* given');
         resolve();
       }
