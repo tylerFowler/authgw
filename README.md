@@ -110,5 +110,4 @@ By default this library will make your JWT secret a random hex value generated f
 
 # TODO:
 - [ ] make docs better, specifically add API docs
-- [ ] add Cookie as token transport method (introduces token transport concept)
 - [ ] allow middleware to be configured to use extra claims as validation
