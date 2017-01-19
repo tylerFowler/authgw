@@ -109,5 +109,7 @@ It is **vitally** important that the client does **not** send another request wi
 By default this library will make your JWT secret a random hex value generated from 24 random bytes (using Node's `crypto` library). This means that whenever your application restarts all tokens generated before the restart will now be invalid. Worse, if you use a round robin technique with multiple Node processes then the tokens will *not* be compatible between the instances. So it's highly recommended that you override this setting.
 
 # TODO:
-- [ ] make docs better, specifically add API docs
-- [ ] allow middleware to be configured to use extra claims as validation
+- make docs better, specifically add API docs
+- allow middleware to be configured to use extra claims as validation
+- remove dependency on underscore
+- remove dependency on Bluebird, use native Promises & allow it to be pluggable
